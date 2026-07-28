@@ -32,8 +32,10 @@ Python · FastAPI · scikit-learn · Docker · AWS ECR · AWS EKS · Helm · Kub
 
 | | |
 |---|---|
-| **Pods running healthy on EKS** | ![pods](docs/pods.png) |
+| **Pods running healthy on EKS** | ![pods](docs/pod-status.png) |
 | **Grafana dashboard scraping app metrics** | ![grafana](docs/grafana.png) |
+| **GitHub Actions: build & push to ECR — verified passing** | ![actions](docs/github-actions.png) |
+| **GitHub Actions: full deploy to EKS via Helm — verified passing** | ![actions-deploy](docs/github-actions-deploy.png) |
 
 ## Project structure
 
@@ -119,9 +121,12 @@ Real debugging, not a smooth tutorial run:
 - **Prometheus wasn't scraping the app's metrics.** Traced it to the Kubernetes `Service` having a pod *selector* but no *labels* of its own — the `ServiceMonitor` matches against Service labels, not selectors. Fixed by adding `metadata.labels` to `service.yaml`.
 - **Helm reported a successful deploy but created zero Kubernetes resources.** The chart's `templates/` folder didn't actually exist on disk despite appearing in the editor. Recreated it directly and verified with `helm template` before redeploying.
 - **scikit-learn failed to install on Python 3.14** (no precompiled wheels yet for that version). Resolved by using a dedicated Python 3.12 virtual environment.
+- **GitHub Actions OIDC authentication silently failed** with a generic "credentials could not be loaded" error across multiple attempts, despite the IAM role, trust policy, and secret all being individually correct. Rather than keep guessing, switched to a dedicated IAM user with scoped access keys — a pragmatic trade-off to unblock delivery, documented here for revisiting later.
+- **`helm upgrade` failed on a fresh cluster** with `no matches for kind "ServiceMonitor"` — the chart depended on a CRD from the Prometheus Operator that wasn't installed on this cluster. Made the `ServiceMonitor` conditional (`monitoring.enabled` flag in `values.yaml`) so the core app deploy doesn't hard-depend on the monitoring stack being present.
 
 ## What's next
 
-- [ ] GitHub Actions workflow: build → push to ECR → `helm upgrade` on every push to `main`
+- [x] GitHub Actions workflow: build → push to ECR → `helm upgrade` on every push to `main` — **fully verified end-to-end**, see screenshots above
 - [ ] Load test with `hey`/`locust` to visually demonstrate HPA scaling
 - [ ] Custom Grafana dashboard panel specifically for request rate/latency
+- [ ] Re-enable Prometheus/Grafana `ServiceMonitor` (`monitoring.enabled: true` in `values.yaml`) once the monitoring stack is reinstalled on a live cluster
