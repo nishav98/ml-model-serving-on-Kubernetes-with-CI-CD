@@ -30,3 +30,8 @@ probes:
   path: /health
   initialDelaySeconds: 5
   periodSeconds: 10
+
+# ServiceMonitor requires the Prometheus Operator CRD to already be installed
+# in the cluster (e.g. via kube-prometheus-stack). Set to true only if that's present.
+monitoring:
+  enabled: false
