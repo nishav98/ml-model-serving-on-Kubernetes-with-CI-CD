@@ -50,9 +50,6 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    # Temporarily disabled: no active EKS cluster right now.
-    # Flip this to `true` (or remove the line) once a cluster is running again.
-    if: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
