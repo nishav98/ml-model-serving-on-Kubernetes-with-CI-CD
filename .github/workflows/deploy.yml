@@ -9,6 +9,10 @@ env:
   ECR_REPOSITORY: ml-serving
   EKS_CLUSTER_NAME: ml-serving
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -22,7 +26,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Log in to Amazon ECR
         id: ecr-login
@@ -45,6 +50,9 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    # Temporarily disabled: no active EKS cluster right now.
+    # Flip this to `true` (or remove the line) once a cluster is running again.
+    if: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,7 +61,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
